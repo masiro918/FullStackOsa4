@@ -1,16 +1,13 @@
-const { test, describe } = require('node:test')
+const { test, describe, beforeEach, after } = require('node:test')
 const assert = require('node:assert')
+const supertest = require('supertest')
+const mongoose = require('mongoose')
 const listHelper = require('../utils/list_helper')
+const Blog = require('../models/blog')
+const blogsController = require('../controllers/blogs')
+const app = require('../app')
 
-test('dummy returns one', () => {
-  const blogs = []
-
-  const result = listHelper.dummy(blogs)
-  assert.strictEqual(result, 1)
-})
-
-describe('total likes', () => {
-  const blogs = [
+const blogs = [
   {
       _id: "5a422a851b54a676234d17f7",
       title: "React patterns",
@@ -59,10 +56,46 @@ describe('total likes', () => {
       likes: 2,
       __v: 0
   }  
-  ]
+]
 
+beforeEach(async () => {
+  let i = 0
+  await Blog.deleteMany({})
+  console.log('DB reseted!')
+
+  await Blog.insertMany(blogs)
+  console.log('Models insterted into db')
+})
+
+test('dummy returns one', () => {
+  const result = listHelper.dummy([])
+  assert.strictEqual(result, 1)
+})
+
+describe('total likes', () => {
   test('when list has only one blog equals the likes of that', () => {
     const result = listHelper.totalLikes(blogs)
     assert.strictEqual(result, 36)
   })
 })
+
+const api = supertest(app)
+
+test('blogs are returned as json', async () => {
+  await api
+    .get('/api/blogs')
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+})
+
+test('all added blogs are returned', async () => {
+  const response = await api.get('/api/blogs')
+
+  assert.strictEqual(response.body.length, blogs.length)
+})
+
+after(async () => {
+  await mongoose.connection.close()
+})
+
+
