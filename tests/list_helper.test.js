@@ -100,6 +100,25 @@ test('identifier property is named as "id"', async () => {
   response.body.forEach(blog => { assert.ok(blog.id)})
 })
 
+test('user can add a new blog', async () => {
+  const newBlog = {
+    title: "Secret blog",
+    author: "user123",
+    url: "no url",
+  }
+  
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  const response = await api.get('/api/blogs')
+  const currentBlogs = response.body
+
+  assert.strictEqual(currentBlogs.length, blogs.length + 1)
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
