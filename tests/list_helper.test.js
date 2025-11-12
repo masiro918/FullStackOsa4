@@ -119,6 +119,22 @@ test('user can add a new blog', async () => {
   assert.strictEqual(currentBlogs.length, blogs.length + 1)
 })
 
+test('user can delete blog', async() => {
+  let response = await api.get('/api/blogs')
+  const currentBlogs = response.body
+  const blogToDelete = currentBlogs[0]
+
+  await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204)
+
+
+  response = await api.get('/api/blogs')
+  const blogsAtEnd = response.body
+
+  assert(!blogsAtEnd.includes(blogToDelete))
+
+  assert.strictEqual(blogsAtEnd.length, blogs.length - 1)
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
