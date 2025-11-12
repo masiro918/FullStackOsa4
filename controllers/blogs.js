@@ -24,7 +24,6 @@ blogsRouter.post('/', (request, response) => {
   })
 })
 
-// Eikös nyt tule sekaisin then-rakennetta ja async/awaitia??
 blogsRouter.delete('/:id', async (request, response) => {
   await Blog.findByIdAndDelete(request.params.id)
   response.status(204).end()
