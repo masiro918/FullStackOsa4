@@ -11,7 +11,7 @@ const addBlog = (blog) => {
 }
 
 const getAllBlogs = () => {
-  return Blog.find({}).populate('user')
+  return Blog.find({}).populate('user', { username: 1})
 }
 
 const getTokenFrom = request => {  
@@ -43,17 +43,21 @@ blogsRouter.post('/', async (request, response) => {
     return response.status(400).json({ error: 'UserId missing or not valid' })
   }
 
-  blog.user = user
+  blog.user = user._id
+  const savedBlog = await addBlog(blog)
+
   user.blogs = user.blogs.concat(blog._id)
+  await user.save()
   
-  user.save().then((reuslt) => {
-    addBlog(blog).then((result) => {
-      response.status(201).json(result)
-    })
-  })
+  response.status(201).json(savedBlog)
 })
 
 blogsRouter.delete('/:id', async (request, response) => {
+  const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)  
+  if (!decodedToken.id) {    
+    return response.status(401).json({ error: 'token invalid' })  
+  }  
+
   await Blog.findByIdAndDelete(request.params.id)
   response.status(204).end()
 })
